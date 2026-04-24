@@ -200,21 +200,29 @@ function writeFileDB(data: DB): void {
   fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
 }
 
-// ── Vercel KV (production) ─────────────────────────────────────────────────
+// ── Upstash Redis (production) ─────────────────────────────────────────────
 
 async function readKV(): Promise<DB> {
-  const { kv } = await import("@vercel/kv");
-  const data = await kv.get<DB>(DB_KEY);
+  const { Redis } = await import("@upstash/redis");
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+  const data = await redis.get<DB>(DB_KEY);
   return data ?? structuredClone(DEFAULT_DB);
 }
 
 async function writeKV(data: DB): Promise<void> {
-  const { kv } = await import("@vercel/kv");
-  await kv.set(DB_KEY, data);
+  const { Redis } = await import("@upstash/redis");
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+  await redis.set(DB_KEY, data);
 }
 
 const useKV = () =>
-  !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+  !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
